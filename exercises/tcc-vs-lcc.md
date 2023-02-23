@@ -17,4 +17,4 @@ public class Main {
 }
 ```
 
-LCC can be lower than TCC for a given class. This occurs when a class has a high number of attributes but the methods do not interact with all of them, resulting in a lower LCC value. In these kind of cases, LCC is lower than TCC because it measures the ratio of unshared method pairs to the total number of possible method pairs. If a class has a high number of attributes, but only a few methods, then the number of possible method pairs will be high, but the number of unshared method pairs will be low, resulting in a low LCC value.
+LCC cannot be lower than TCC at any time. This is because LCC is defined as the number of methods that a class calls divided by the total number of methods in the class. Therefore, LCC will always be greater than or equal to 1.0, which is the value of TCC for a class with only one method.
