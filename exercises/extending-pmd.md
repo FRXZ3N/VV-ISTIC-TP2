@@ -14,6 +14,7 @@ if (...) {
 
 }
 ```
+
 Notice that the nested `if`s may not be direct children of the outer `if`s. They may be written, for example, inside a `for` loop or any other statement.
 Write below the XML definition of your rule.
 
@@ -23,3 +24,28 @@ Use your rule with different projects and describe you findings below. See the [
 
 ## Answer
 
+pmd indicates where there are nested `if` statements in the code. with the following rule:
+
+```xml
+
+<rule name=""
+      language="java"
+      message=""
+      class="net.sourceforge.pmd.lang.rule.XPathRule">
+   <description>
+
+   </description>
+   <priority>3</priority>
+   <properties>
+      <property name="version" value="2.0"/>
+      <property name="xpath">
+         <value>
+<![CDATA[
+//IfStatement[count(.//IfStatement)>=2]
+]]>
+         </value>
+      </property>
+   </properties>
+</rule>
+
+```
