@@ -4,16 +4,15 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.*;
 import com.github.javaparser.ast.visitor.VoidVisitorWithDefaults;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
+import java.nio.file.Paths;
 
 public class PrivateElementPrint extends VoidVisitorWithDefaults<Void> {
 
-  private final String path = "C:\\Users\\dms20\\workspace2022-2023\\VV\\VV-ISTIC-TP2\\code\\javaparser-starter\\src\\main\\java\\fr\\istic\\vv\\output.md";
-  private StringBuilder output = new StringBuilder();
+  private final StringBuilder output = new StringBuilder();
+  private String currentVariable = "";
+  private boolean hasGetter;
 
   @Override
   public void visit(CompilationUnit unit, Void arg) {
@@ -23,29 +22,26 @@ public class PrivateElementPrint extends VoidVisitorWithDefaults<Void> {
   }
 
   public void visitTypeDeclaration(TypeDeclaration<?> declaration, Void arg) {
-    List<MethodDeclaration> methods = declaration.getMethods();
-    for (FieldDeclaration field : declaration.getFields()) {
-      if (field.isPrivate()) {
-        for (VariableDeclarator variable : field.getVariables()) {
-          if (!hasGetter(methods, variable.getNameAsString())){
-            System.out.println(declaration.getFullyQualifiedName().orElse("[Anonymous]"));
-            output.append("\n"+ "* " + declaration.getFullyQualifiedName().orElse("[Anonymous]"));
-            variable.accept(this, arg);
-          }
 
-        }
+    for (FieldDeclaration field : declaration.getFields()) {
+      field.accept(this, arg);
+      for (MethodDeclaration method : declaration.getMethods()) {
+        method.accept(this, arg);
       }
+      write(declaration, currentVariable);
     }
 
   }
 
-  private boolean hasGetter(List<MethodDeclaration> methods, String name) {
-    for (MethodDeclaration method : methods) {
-      if (method.getNameAsString().toLowerCase().equals("get" + name.toLowerCase())) {
-        return true;
-      }
+  private void write(TypeDeclaration<?> declaration,String variable){
+    if (!hasGetter && !variable.equals("")) {
+      System.out.println(declaration.getFullyQualifiedName().orElse("[Anonymous]"));
+      output.append("* ").append(declaration.getFullyQualifiedName().orElse("[Anonymous]")).append("\n");
+      System.out.println(currentVariable);
+      output.append("  * ").append(currentVariable).append("\n");
+      currentVariable = "";
     }
-    return false;
+
   }
 
   @Override
@@ -60,11 +56,31 @@ public class PrivateElementPrint extends VoidVisitorWithDefaults<Void> {
 
   @Override
   public void visit(VariableDeclarator variableDeclarator, Void arg) {
-    System.out.println("  " + variableDeclarator.getNameAsString());
-    output.append("\n" +"  * " + variableDeclarator.getNameAsString());
+    hasGetter = false;
+    currentVariable = variableDeclarator.getNameAsString();
   }
 
+  @Override
+  public void visit(MethodDeclaration declaration, Void arg) {
+    if (declaration.isPublic() && declaration.getNameAsString().toLowerCase().equals("get" + currentVariable.toLowerCase())) {
+      hasGetter = true;
+    }
+  }
+
+  @Override
+  public void visit(FieldDeclaration fieldDeclaration, Void arg) {
+    if (fieldDeclaration.isPrivate() && !fieldDeclaration.isClassOrInterfaceDeclaration()) {
+      for (VariableDeclarator variable : fieldDeclaration.getVariables()) {
+        variable.accept(this, arg);
+      }
+
+    }
+  }
+
+  /**
+   * Write the output to a file
+   */
   public void writeToFile() throws IOException {
-    Files.writeString(Path.of(path), output);
+    Files.writeString(Paths.get("code/javaparser-starter/src/main/java/fr/istic/vv/result.md"), output);
   }
 }
